@@ -1,48 +1,31 @@
 import asyncio
 import logging
 import sys
-from typing import Callable, Awaitable, Dict, Any
 
 import aioschedule
-from aiogram import Bot, Dispatcher, BaseMiddleware
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import TelegramObject
 from aiogram.exceptions import TelegramNetworkError
 from aiosqlite import Connection
 
 from src.core.config import get_config
+from src.core.modules import ModulesLoader
+from src.middlewares import DbSessionMiddleware
 from src.utils import try_to_run
-from src.routes import router
-from src.tasks import tasks
 from src.db import init_db, get_db
 
 
-class DbSessionMiddleware(BaseMiddleware):
-    def __init__(self, db):
-        super().__init__()
-        self.db = db
-
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        data["db"] = self.db
-        return await handler(event, data)
-
-
-async def scheduler(bot: Bot, db: Connection):
-    for taks in tasks:
-        await taks(bot, db)
+async def scheduler(tasks, bot: Bot, db: Connection):
+    for task in tasks:
+        await task(bot, db)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
 
 
-async def on_startup(bot: Bot, db: Connection):
-    asyncio.create_task(scheduler(bot, db))
+async def on_startup(tasks, bot: Bot, db: Connection):
+    asyncio.create_task(scheduler(tasks, bot, db))
 
 
 async def main():
@@ -51,12 +34,15 @@ async def main():
     bot = Bot(token=config.bot.token, default=properties)
     dp = Dispatcher()
 
+    modules_loader = ModulesLoader()
+    modules_loader.load()
+
     db = await get_db()
-    dp.include_router(router)
+    dp.include_router(modules_loader.router)
     dp.update.middleware(DbSessionMiddleware(db=db))
 
     async def _on_startup(bot: Bot):
-        await on_startup(bot, db)
+        await on_startup(modules_loader.tasks, bot, db)
     dp.startup.register(_on_startup)
 
     await init_db(db)

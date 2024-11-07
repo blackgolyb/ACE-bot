@@ -1,10 +1,10 @@
-import asyncio
+from itertools import groupby
+
 import aioschedule
 from aiogram import Bot
 from aiosqlite import Connection
-from itertools import groupby
 
-from services.publisher import PublisherSevice
+from .services import PublisherSevice
 
 
 async def send_videos(bot: Bot, db: Connection):

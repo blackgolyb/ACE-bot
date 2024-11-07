@@ -12,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_FOLDER = Path(__file__).parent.parent.parent
 ENV_FOLDER = PROJECT_FOLDER / "env"
+MODULES_MODULE = "src.modules"
 
 
 def get_model_config(**kwargs: typing.Unpack[SettingsConfigDict]) -> SettingsConfigDict:

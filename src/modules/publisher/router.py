@@ -1,21 +1,18 @@
 from re import Match
 
-from aiogram import F, Router
+from aiogram import F
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiosqlite import Connection
 
-from src.filters import admin_filter
-from src.services.publisher import PublisherSevice
+from src.core.routers import Router
+from .services import PublisherSevice
+
 
 router = Router()
 
 
-# @router.message(~admin_filter)
-# async def handle_not_whitelisted_users(message: Message):
-#     await message.answer(f"You have no acces to this bot. {message.from_user.id}")
-
-@router.message(F.text.regexp(r"^\/map_publisher\s+(https:\/\/youtube\.com\/playlist\?list=(.+)&.+)$").as_("args"), admin_filter)
+@router.admin.message(F.text.regexp(r"^\/map_publisher\s+(https:\/\/youtube\.com\/playlist\?list=(.+)&.+)$").as_("args"))
 async def map_publisher(message: Message, args: Match[str], db: Connection) -> None:
     try:
         await message.delete()
@@ -34,12 +31,12 @@ async def map_publisher(message: Message, args: Match[str], db: Connection) -> N
     )
 
 
-@router.message(F.text.regexp(r"^\/map_publisher\s*.*$"), admin_filter)
+@router.admin.message(F.text.regexp(r"^\/map_publisher\s*.*$"))
 async def failed_map_publisher(message: Message) -> None:
     await message.answer("Incorrect call of map_publisher")
 
 
-@router.message(Command("get_mappings"), admin_filter)
+@router.admin.message(Command("get_mappings"))
 async def get_mappings(message: Message, db: Connection) -> None:
     service = PublisherSevice(db)
     data = await service.get_mappings()
