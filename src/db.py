@@ -16,7 +16,23 @@ async def init_db(db: aiosqlite.Connection):
             playlist_id     TEXT NOT NULL,
             last_video_id   TEXT,
             PRIMARY KEY (chat_id, playlist_id)
-        )
+        );
+        """
+    )
+    await db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS Groups (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            name            TEXT NOT NULL
+        );
+        """
+    )
+    await db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS Subjects (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            name            TEXT NOT NULL
+        );
         """
     )
     await db.commit()

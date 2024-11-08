@@ -28,6 +28,7 @@ class Bot(BaseSettings):
     attempts: int
     attempt_sleep: int
     admins: list[int]
+    uploaders: list[int]
 
 
 class Core(BaseSettings):
